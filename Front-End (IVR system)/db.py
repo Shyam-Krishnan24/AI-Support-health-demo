@@ -16,6 +16,8 @@ def create_table():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS ivr_calls (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_name VARCHAR(100),
+        patient_phone VARCHAR(50),
         language VARCHAR(50),
         call_type VARCHAR(20),
         symptom TEXT,
@@ -42,10 +44,12 @@ def save_call(data):
 
     cursor.execute("""
     INSERT INTO ivr_calls
-    (language, call_type, symptom, age, gender, patient_status,
+    (patient_name, patient_phone, language, call_type, symptom, age, gender, patient_status,
      past_surgery, medications, urgency_score, priority_level, token)
-    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, (
+        data.get("patient_name"),
+        data.get("patient_phone"),
         data["language"],
         data["call_type"],
         data["symptom"],
@@ -60,5 +64,28 @@ def save_call(data):
     ))
 
     conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def populate_sample_data():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM ivr_calls")
+    count = cursor.fetchone()[0]
+    if count == 0:
+        samples = [
+            ("Alice","+911234567890","English","Non-Emergency","Fever",30,"Female","Normal",False,"Paracetamol",30,"C","C-ER-001"),
+            ("Bob","+919876543210","English","Emergency","Chest Pain",65,"Male","Normal",True,"Aspirin",95,"A","A-ER-001"),
+            ("Carol","+911112223334","Tamil","Non-Emergency","Headache",25,"Female","Normal",False,"",20,"D","D-ER-001"),
+        ]
+        cursor.executemany("""
+        INSERT INTO ivr_calls
+        (patient_name, patient_phone, language, call_type, symptom, age, gender, patient_status,
+         past_surgery, medications, urgency_score, priority_level, token)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, samples)
+        conn.commit()
+
     cursor.close()
     conn.close()
