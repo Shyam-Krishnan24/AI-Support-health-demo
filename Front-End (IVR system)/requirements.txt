@@ -1,4 +1,0 @@
-mysql-connector-python
-pyttsx3
-SpeechRecognition
-pyaudio
